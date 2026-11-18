@@ -1,0 +1,13 @@
+# Backend build output and local data
+backend/build/
+backend/models/
+backend/data/
+backend/.env
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# Editor / OS
+.vscode/
+.DS_Store
