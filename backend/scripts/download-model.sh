@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Download a whisper.cpp ggml model into backend/models/.
+# bash twin of download-model.ps1.
 #
 # Usage:  bash backend/scripts/download-model.sh [model]   (default: base)
 # Examples of model names: tiny, base, small, base.en
@@ -18,4 +19,8 @@ mkdir -p "$MODELS_DIR"
 # goes straight into backend/models/ and nothing is written inside the submodule.
 bash "$WHISPER_DOWNLOADER" "$MODEL" "$MODELS_DIR"
 
+if [ ! -f "$MODELS_DIR/ggml-$MODEL.bin" ]; then
+  echo "Download failed: $MODELS_DIR/ggml-$MODEL.bin was not created." >&2
+  exit 1
+fi
 echo "Model ready: $MODELS_DIR/ggml-$MODEL.bin"
