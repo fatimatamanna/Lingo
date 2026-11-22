@@ -1,5 +1,6 @@
+#include "lingo/server.h"
+
 #include <httplib.h>
-#include <nlohmann/json.hpp>
 
 #include <iostream>
 
@@ -8,10 +9,7 @@ int main() {
     constexpr int kPort = 8080;
 
     httplib::Server server;
-
-    server.Get("/api/health", [](const httplib::Request&, httplib::Response& res) {
-        res.set_content(nlohmann::json{{"ok", true}}.dump(), "application/json");
-    });
+    lingo::register_routes(server);
 
     std::cout << "Lingo server listening on http://" << kHost << ":" << kPort << std::endl;
     if (!server.listen(kHost, kPort)) {
