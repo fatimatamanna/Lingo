@@ -2,7 +2,9 @@
 backend/build/
 backend/models/
 backend/data/
-backend/.env
+
+# Secrets (any .env anywhere in the repo)
+.env
 
 # whisper.cpp standalone test build, test recordings, and results
 build-whisper/
