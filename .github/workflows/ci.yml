@@ -6,12 +6,24 @@ on:
 
 jobs:
   backend:
-    name: Backend (build + tests)
-    runs-on: ubuntu-latest
+    name: Backend (build + tests, ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false        # show Linux and Mac results separately
+      matrix:
+        # macos-latest is Apple Silicon (arm64), so this also builds whisper.cpp's Metal backend.
+        os: [ubuntu-latest, macos-latest]
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive   # pulls backend/third_party/whisper.cpp
+
+      # Parse-only check of the bash scripts. /bin/bash on macOS is Apple's bash 3.2,
+      # the version teammates' Macs actually run.
+      - name: Check shell scripts
+        run: |
+          /bin/bash --version | head -1
+          for f in $(git ls-files '*.sh'); do /bin/bash -n "$f"; echo "ok  $f"; done
 
       - name: Configure
         run: cmake -S backend -B backend/build -DCMAKE_BUILD_TYPE=Release

@@ -4,6 +4,11 @@ backend/models/
 backend/data/
 backend/.env
 
+# whisper.cpp standalone test build, test recordings, and results
+build-whisper/
+test-audio/
+whisper-results.md
+
 # Frontend
 frontend/node_modules/
 frontend/dist/

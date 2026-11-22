@@ -5,6 +5,14 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Single-config generators (Make/Ninja on macOS/Linux) default to an unoptimized
+# build, which makes whisper.cpp many times slower. Default to Release there.
+# Multi-config generators (Visual Studio, Xcode) pick it with --config instead.
+get_property(LINGO_MULTI_CONFIG GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+if(NOT LINGO_MULTI_CONFIG AND NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
+endif()
+
 # Build every dependency as a static library. On Windows this keeps whisper/ggml
 # out of separate DLLs, so lingo_server.exe and lingo_tests.exe run without
 # copying DLLs next to them.
@@ -39,7 +47,12 @@ FetchContent_MakeAvailable(httplib json googletest)
 # --- whisper.cpp (git submodule, never edited) -------------------------------
 set(WHISPER_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(WHISPER_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+# On Apple Silicon whisper.cpp uses Metal (GPU) by default, with the shaders
+# embedded in the binary, so nothing extra is needed. Don't turn GGML_METAL off.
 add_subdirectory(third_party/whisper.cpp)
+if(APPLE)
+  message(STATUS "Lingo: whisper.cpp Metal = ${GGML_METAL}, Accelerate BLAS = ${GGML_BLAS}")
+endif()
 
 # --- lingo_core: everything except main(), shared by server and tests --------
 file(GLOB LINGO_CORE_SOURCES CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)

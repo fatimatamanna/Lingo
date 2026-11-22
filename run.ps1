@@ -1,5 +1,6 @@
 # Build and start the backend, then start the frontend dev server.
-# Ctrl+C stops both.  Windows PowerShell equivalent of run.sh.
+# Ctrl+C stops both.  Windows PowerShell (also works in PowerShell 7 on macOS/Linux).
+# bash twin: run.sh
 #
 # Usage:  .\run.ps1
 $ErrorActionPreference = 'Stop'
@@ -7,15 +8,29 @@ $ErrorActionPreference = 'Stop'
 $Root     = $PSScriptRoot
 $Backend  = Join-Path $Root 'backend'
 $Frontend = Join-Path $Root 'frontend'
+$Build    = Join-Path $Backend 'build'
+
+if (-not (Test-Path (Join-Path $Backend 'third_party/whisper.cpp/CMakeLists.txt'))) {
+    Write-Host 'whisper.cpp submodule is missing. Run: git submodule update --init --recursive' -ForegroundColor Red
+    exit 1
+}
 
 # --- Backend -----------------------------------------------------------------
-# The Visual Studio generator is multi-config, so the exe lands in build\Release\.
-cmake -S $Backend -B (Join-Path $Backend 'build')
+cmake -S $Backend -B $Build -DCMAKE_BUILD_TYPE=Release
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-cmake --build (Join-Path $Backend 'build') --config Release --parallel
+cmake --build $Build --config Release --parallel
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-$ServerExe = Join-Path $Backend 'build\Release\lingo_server.exe'
+# Visual Studio and Xcode put the binary in build/Release/; Make/Ninja put it in build/.
+$ServerExe = @(
+    'Release/lingo_server.exe', 'lingo_server.exe',
+    'Release/lingo_server',     'lingo_server'
+) | ForEach-Object { Join-Path $Build $_ } | Where-Object { Test-Path $_ -PathType Leaf } | Select-Object -First 1
+if (-not $ServerExe) {
+    Write-Host "Built, but couldn't find lingo_server under $Build" -ForegroundColor Red
+    exit 1
+}
+
 $Server = Start-Process -FilePath $ServerExe -WorkingDirectory $Backend -NoNewWindow -PassThru
 
 # --- Frontend ----------------------------------------------------------------
